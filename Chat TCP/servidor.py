@@ -71,7 +71,7 @@ def aceitar_conexoes():
         thread.start()
 
 # Configurações do servidor
-ip_servidor = '0.0.0.0'  # Define o IP em que o servidor vai escutar (0.0.0.0 significa que escuta em todas as interfaces)
+ip_servidor = '127.0.0.1'  # Define o IP em que o servidor vai escutar
 porta_servidor = 55555  # Define a porta em que o servidor vai escutar
 
 # Inicializa o servidor
