@@ -20,8 +20,6 @@ def gerenciar_cliente(cliente):
         try:
             # Recebendo a mensagem do cliente
             mensagem_criptografada = cliente.recv(1024).decode('ascii')
-            if not mensagem_criptografada:
-                break
             print(f"[Mensagem recebida antes da criptografia]: {mensagem_criptografada}")
             
             # Exemplo de criptografia usando a Cifra de César com chave 3
@@ -33,25 +31,20 @@ def gerenciar_cliente(cliente):
             
             # Enviando a mensagem criptografada para todos os clientes
             transmitir_para_todos(mensagem_criptografada_devolvida.encode('ascii'))
-        except ConnectionResetError:
-            print("Conexão com um cliente foi resetada.")
+        except:
+            # Em caso de erro, remove o cliente da lista e fecha a conexão
+            indice = clientes.index(cliente)
+            clientes.remove(cliente)
+            cliente.close()
+            apelido = apelidos[indice]
+            transmitir_para_todos(f'{apelido} saiu!'.encode('ascii'))
+            apelidos.remove(apelido)
             break
-        except Exception as e:
-            print(f"Ocorreu um erro: {e}")
-            break
-    cliente.close()
-    clientes.remove(cliente)
-    transmitar_para_todos(f'{apelido} saiu!'.encode('ascii'))
-    apelidos.remove(apelido)
 
 # Função que envia uma mensagem para todos os clientes conectados
 def transmitir_para_todos(mensagem):
     for cliente in clientes:
-        try:
-            cliente.send(mensagem)
-        except:
-            cliente.close()
-            clientes.remove(cliente)
+        cliente.send(mensagem)
 
 # Função que recebe novas conexões de clientes
 def aceitar_conexoes():
@@ -61,15 +54,7 @@ def aceitar_conexoes():
 
         # Pedindo o apelido do cliente
         cliente.send('APELIDO'.encode('ascii'))
-        try:
-            apelido = cliente.recv(1024).decode('ascii')
-            if not apelido:
-                raise ValueError("Apelido não recebido do cliente.")
-        except (ConnectionResetError, ValueError) as e:
-            print(f"Erro ao receber o apelido: {e}")
-            cliente.close()
-            continue
-
+        apelido = cliente.recv(1024).decode('ascii')
         apelidos.append(apelido)
         clientes.append(cliente)
 
@@ -82,7 +67,7 @@ def aceitar_conexoes():
         thread.start()
 
 # Configurações do servidor
-ip_servidor = '127.0.0.1'
+ip_servidor = '0.0.0.0'
 porta_servidor = 55555
 
 # Inicializando o servidor

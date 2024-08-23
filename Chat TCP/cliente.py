@@ -94,7 +94,7 @@ def cifra_de_vigenere(mensagem, chave, criptografar=True):
             resultado += caractere
     return resultado
 
-def criptografar_mensagem(mensagem, escolha, chave):
+def criptografar_mensagem(mensagem):
     if escolha == '1':
         return cifra_de_cesar(mensagem, int(chave))
     elif escolha == '2':
@@ -106,30 +106,22 @@ def criptografar_mensagem(mensagem, escolha, chave):
     else:
         return mensagem
 
-# Função que recebe mensagens do servidor
 def receber_mensagens():
     while True:
         try:
             mensagem = cliente.recv(1024).decode('ascii')
-            mensagem_desencriptada = criptografar_mensagem(mensagem, escolha, chave)
-            print(f"Recebido: {mensagem_desencriptada}")
+            print(mensagem)
         except:
             print("Ocorreu um erro!")
             cliente.close()
             break
 
-# Função que envia mensagens para o servidor
 def enviar_mensagens():
     while True:
-        mensagem = f'{apelido}: {input("")}'
-        mensagem_criptografada = criptografar_mensagem(mensagem, escolha, chave)
+        mensagem = '{}: {}'.format(apelido, input(''))
+        mensagem_criptografada = criptografar_mensagem(mensagem)
         cliente.send(mensagem_criptografada.encode('ascii'))
 
-# Solicitação do IP do servidor e porta
-ip_servidor = input("Digite o IP do servidor: ")
-porta_servidor = int(input("Digite a porta do servidor: "))
-
-# Escolha da cifra de criptografia pelo usuário
 print("Escolha a cifra de criptografia: ")
 print("1. Cifra de César")
 print("2. Substituição Monoalfabética")
@@ -137,15 +129,20 @@ print("3. Cifra de Playfair")
 print("4. Cifra de Vigenère")
 escolha = input("Digite o número da cifra desejada: ")
 
-# Solicitação da chave de criptografia
 chave = input("Digite a chave para a cifra escolhida: ")
 
-# Conectando ao servidor
+ip_servidor = input("Digite o IP do servidor: ")
+porta_servidor = int(input("Digite a porta do servidor: "))
+
 apelido = input("Escolha seu apelido: ")
+
 cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 cliente.connect((ip_servidor, porta_servidor))
 
-# Iniciando threads para envio e recebimento de mensagens
+# Enviar apelido
+cliente.send(apelido.encode('ascii'))
+
+# Iniciar threads para envio e recebimento de mensagens
 thread_receber = threading.Thread(target=receber_mensagens)
 thread_receber.start()
 
