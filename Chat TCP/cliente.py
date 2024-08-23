@@ -1,18 +1,8 @@
 import socket
 import threading
 
-# Escolha da cifra de criptografia pelo usuário
-print("Escolha a cifra de criptografia: ")
-print("1. Cifra de César")
-print("2. Substituição Monoalfabética")
-print("3. Cifra de Playfair")
-print("4. Cifra de Vigenère")
-escolha = input("Digite o número da cifra desejada: ")
+# Funções de criptografia
 
-# Solicitação da chave de criptografia
-chave = input("Digite a chave para a cifra escolhida: ")
-
-# Função que implementa a Cifra de César
 def cifra_de_cesar(mensagem, chave, criptografar=True):
     resultado = ''
     deslocamento = chave if criptografar else -chave
@@ -24,7 +14,6 @@ def cifra_de_cesar(mensagem, chave, criptografar=True):
             resultado += caractere
     return resultado
 
-# Função que implementa a Substituição Monoalfabética
 def cifra_monoalfabetica(mensagem, chave, criptografar=True):
     alfabeto = 'abcdefghijklmnopqrstuvwxyz'
     resultado = ''
@@ -34,7 +23,6 @@ def cifra_monoalfabetica(mensagem, chave, criptografar=True):
         resultado += mapa_chave.get(caractere, caractere)
     return resultado
 
-# Função que implementa a Cifra de Playfair
 def cifra_de_playfair(mensagem, chave, criptografar=True):
     def formatar_mensagem(mensagem):
         mensagem = mensagem.replace(' ', '').upper()
@@ -90,7 +78,6 @@ def cifra_de_playfair(mensagem, chave, criptografar=True):
     
     return resultado
 
-# Função que implementa a Cifra de Vigenère
 def cifra_de_vigenere(mensagem, chave, criptografar=True):
     resultado = ''
     chave = chave.lower()
@@ -107,8 +94,7 @@ def cifra_de_vigenere(mensagem, chave, criptografar=True):
             resultado += caractere
     return resultado
 
-# Função que aplica a cifra escolhida na mensagem
-def criptografar_mensagem(mensagem):
+def criptografar_mensagem(mensagem, escolha, chave):
     if escolha == '1':
         return cifra_de_cesar(mensagem, int(chave))
     elif escolha == '2':
@@ -125,7 +111,8 @@ def receber_mensagens():
     while True:
         try:
             mensagem = cliente.recv(1024).decode('ascii')
-            print(mensagem)
+            mensagem_desencriptada = criptografar_mensagem(mensagem, escolha, chave)
+            print(f"Recebido: {mensagem_desencriptada}")
         except:
             print("Ocorreu um erro!")
             cliente.close()
@@ -134,13 +121,24 @@ def receber_mensagens():
 # Função que envia mensagens para o servidor
 def enviar_mensagens():
     while True:
-        mensagem = '{}: {}'.format(apelido, input(''))
-        mensagem_criptografada = criptografar_mensagem(mensagem)
+        mensagem = f'{apelido}: {input("")}'
+        mensagem_criptografada = criptografar_mensagem(mensagem, escolha, chave)
         cliente.send(mensagem_criptografada.encode('ascii'))
 
 # Solicitação do IP do servidor e porta
 ip_servidor = input("Digite o IP do servidor: ")
 porta_servidor = int(input("Digite a porta do servidor: "))
+
+# Escolha da cifra de criptografia pelo usuário
+print("Escolha a cifra de criptografia: ")
+print("1. Cifra de César")
+print("2. Substituição Monoalfabética")
+print("3. Cifra de Playfair")
+print("4. Cifra de Vigenère")
+escolha = input("Digite o número da cifra desejada: ")
+
+# Solicitação da chave de criptografia
+chave = input("Digite a chave para a cifra escolhida: ")
 
 # Conectando ao servidor
 apelido = input("Escolha seu apelido: ")
