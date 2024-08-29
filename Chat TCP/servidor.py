@@ -1,87 +1,77 @@
-import socket  # Importa o módulo socket para comunicação de rede
-import threading  # Importa o módulo threading para executar código em paralelo
+import socket
+import threading
 
-# Função para criptografar e descriptografar mensagens usando a cifra de César
+# Função que implementa a Cifra de César
 def cifra_de_cesar(mensagem, chave, criptografar=True):
-    resultado = ''  # Inicializa a variável para armazenar o resultado
-    deslocamento = chave if criptografar else -chave  # Define o deslocamento para criptografar ou descriptografar
-    for caractere in mensagem:  # Itera sobre cada caractere da mensagem
-        if caractere.isalpha():  # Verifica se o caractere é uma letra
-            base = ord('A') if caractere.isupper() else ord('a')  # Define a base ASCII dependendo se a letra é maiúscula ou minúscula
-            # Calcula o novo caractere aplicando a cifra de César e adiciona ao resultado
+    resultado = ''
+    deslocamento = chave if criptografar else -chave
+    for caractere in mensagem:
+        if caractere.isalpha():
+            base = ord('A') if caractere.isupper() else ord('a')
             resultado += chr((ord(caractere) - base + deslocamento) % 26 + base)
         else:
-            resultado += caractere  # Adiciona caracteres não alfabéticos sem modificação
-    return resultado  # Retorna a mensagem criptografada ou descriptografada
+            resultado += caractere
+    return resultado
 
-# Função que gerencia as mensagens recebidas de um cliente
+# Função que gerencia as mensagens recebidas dos clientes
 def gerenciar_cliente(cliente):
-    while True:  # Loop para continuar gerenciando o cliente enquanto estiver conectado
+    while True:
         try:
-            # Recebe a mensagem criptografada do cliente e decodifica para texto
-            mensagem_criptografada = cliente.recv(1024).decode('ascii')
-            print(f"[Mensagem recebida antes da criptografia]: {mensagem_criptografada}")
-
-            # Descriptografa a mensagem usando a cifra de César com chave 3
-            mensagem_desencriptada = cifra_de_cesar(mensagem_criptografada, 3, criptografar=False)
-            print(f"[Mensagem descriptografada]: {mensagem_desencriptada}")
-
-            # Recriptografa a mensagem para enviar de volta para todos os clientes
-            mensagem_criptografada_devolvida = cifra_de_cesar(mensagem_desencriptada, 3)
-            print(f"[Mensagem criptografada antes do envio]: {mensagem_criptografada_devolvida}")
-
-            # Envia a mensagem criptografada para todos os clientes conectados
-            transmitir_para_todos(mensagem_criptografada_devolvida.encode('ascii'))
-        except:  # Em caso de erro
-            # Obtém o índice do cliente na lista
+            # Recebendo a mensagem do cliente
+            mensagem = cliente.recv(1024).decode('ascii')
+            print(f"[Mensagem recebida antes da criptografia]: {mensagem}")
+            
+            # Exemplo de criptografia usando a Cifra de César com chave 3
+            mensagem_criptografada = cifra_de_cesar(mensagem, 3)
+            print(f"[Mensagem criptografada]: {mensagem_criptografada}")
+            
+            # Enviando a mensagem criptografada para todos os clientes
+            transmitir_para_todos(mensagem_criptografada.encode('ascii'))
+        except:
+            # Em caso de erro, remove o cliente da lista e fecha a conexão
             indice = clientes.index(cliente)
-            clientes.remove(cliente)  # Remove o cliente da lista
-            cliente.close()  # Fecha a conexão com o cliente
-            apelido = apelidos[indice]  # Obtém o apelido do cliente
-            # Notifica todos os clientes de que o cliente saiu
+            clientes.remove(cliente)
+            cliente.close()
+            apelido = apelidos[indice]
             transmitir_para_todos(f'{apelido} saiu!'.encode('ascii'))
-            apelidos.remove(apelido)  # Remove o apelido da lista
-            break  # Sai do loop
+            apelidos.remove(apelido)
+            break
 
 # Função que envia uma mensagem para todos os clientes conectados
 def transmitir_para_todos(mensagem):
-    for cliente in clientes:  # Itera sobre todos os clientes
-        cliente.send(mensagem)  # Envia a mensagem para o cliente
+    for cliente in clientes:
+        cliente.send(mensagem)
 
-# Função que aceita novas conexões de clientes
+# Função que recebe novas conexões de clientes
 def aceitar_conexoes():
-    while True:  # Loop para continuar aceitando novas conexões
-        # Aceita uma nova conexão do cliente e obtém o endereço do cliente
+    while True:
         cliente, endereco = servidor.accept()
         print(f"Conectado com {str(endereco)}")
 
-        # Pede o apelido do cliente
+        # Pedindo o apelido do cliente
         cliente.send('APELIDO'.encode('ascii'))
         apelido = cliente.recv(1024).decode('ascii')
-        apelidos.append(apelido)  # Adiciona o apelido à lista de apelidos
-        clientes.append(cliente)  # Adiciona o cliente à lista de clientes
+        apelidos.append(apelido)
+        clientes.append(cliente)
 
         print(f"Apelido é {apelido}")
-        # Notifica todos os clientes de que um novo cliente entrou
         transmitir_para_todos(f"{apelido} entrou!".encode('ascii'))
         cliente.send('Conectado ao servidor!'.encode('ascii'))
 
-        # Cria uma nova thread para gerenciar as mensagens desse cliente
+        # Criando uma nova thread para gerenciar as mensagens desse cliente
         thread = threading.Thread(target=gerenciar_cliente, args=(cliente,))
         thread.start()
 
-# Configurações do servidor
-ip_servidor = '127.0.0.1'  # Define o IP em que o servidor vai escutar
-porta_servidor = 55555  # Define a porta em que o servidor vai escutar
+# Configuração do servidor
+host = '127.0.0.1'
+porta = 55555
 
-# Inicializa o servidor
-servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Cria um socket TCP
-servidor.bind((ip_servidor, porta_servidor))  # Associa o socket ao IP e porta
-servidor.listen()  # Coloca o servidor em modo de escuta
+servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+servidor.bind((host, porta))
+servidor.listen()
 
-clientes = []  # Lista para armazenar clientes conectados
-apelidos = []  # Lista para armazenar apelidos dos clientes
+clientes = []
+apelidos = []
 
-print("Servidor iniciado e aguardando conexões...")  # Mensagem indicando que o servidor está pronto para aceitar conexões
-
-aceitar_conexoes()  # Inicia a aceitação de novas conexões
+print("Servidor está ouvindo...")
+aceitar_conexoes()
