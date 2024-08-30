@@ -61,13 +61,10 @@ def cifra_de_playfair(mensagem, chave, criptografar=True):
 
     def criar_matriz(chave):
         alfabeto = 'ABCDEFGHIKLMNOPQRSTUVWXYZ'
-        matriz = []
-        for caractere in chave.upper():
-            if caractere not in matriz and caractere != 'J':
-                matriz.append(caractere)
-        for caractere in alfabeto:
-            if caractere not in matriz:
-                matriz.append(caractere)
+        chave = chave.upper().replace('J', 'I')  # Substituir J por I
+        chave = ''.join(sorted(set(chave), key=chave.index))  # Remover duplicatas mantendo a ordem
+        matriz = [chave[i] for i in range(len(chave))]  # Adicionar caracteres da chave
+        matriz += [c for c in alfabeto if c not in matriz]  # Adicionar caracteres do alfabeto que não estão na chave
         return [matriz[i:i + 5] for i in range(0, 25, 5)]
 
     def encontrar_posicao(matriz, caractere):
@@ -75,14 +72,24 @@ def cifra_de_playfair(mensagem, chave, criptografar=True):
             for j, valor in enumerate(linha):
                 if valor == caractere:
                     return i, j
+        # Retorna uma posição padrão para caracteres não encontrados
+        return None, None
 
     mensagem = formatar_mensagem(mensagem)
     matriz = criar_matriz(chave)
     resultado = ''
     
     for i in range(0, len(mensagem), 2):
-        linha1, coluna1 = encontrar_posicao(matriz, mensagem[i])
-        linha2, coluna2 = encontrar_posicao(matriz, mensagem[i + 1])
+        pos1 = encontrar_posicao(matriz, mensagem[i])
+        pos2 = encontrar_posicao(matriz, mensagem[i + 1])
+
+        if pos1 == (None, None) or pos2 == (None, None):
+            # Ignorar caracteres não encontrados na matriz
+            resultado += mensagem[i] + mensagem[i + 1]
+            continue
+        
+        linha1, coluna1 = pos1
+        linha2, coluna2 = pos2
 
         if linha1 == linha2:
             coluna1 = (coluna1 + 1) % 5 if criptografar else (coluna1 - 1) % 5
@@ -112,7 +119,9 @@ def cifra_de_vigenere(mensagem, chave, criptografar=True):
             indice_chave = (indice_chave + 1) % len(chave)
         else:
             resultado += caractere
+    
     return resultado
+
 
 # Função que aplica a cifra escolhida na mensagem
 def criptografar_mensagem(mensagem):
