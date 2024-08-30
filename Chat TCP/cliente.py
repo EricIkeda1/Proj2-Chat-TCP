@@ -26,11 +26,18 @@ def cifra_de_cesar(mensagem, chave, criptografar=True):
 
 # Função que implementa a Substituição Monoalfabética
 def cifra_monoalfabetica(mensagem, chave, criptografar=True):
-    alfabeto = 'abcdefghijklmnopqrstuvwxyz'
-    resultado = ''
-    mapa_chave = {alfabeto[i]: chave[i] for i in range(26)} if criptografar else {chave[i]: alfabeto[i] for i in range(26)}
+    alfabeto_original = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    alfabeto_substituido = 'QWERTYUIOPLKJHGFDSAZXCVBNM'
     
-    for caractere in mensagem.lower():
+    chave = chave.upper()
+    
+    if criptografar:
+        mapa_chave = {alfabeto_original[i]: alfabeto_substituido[i] for i in range(26)}
+    else:
+        mapa_chave = {alfabeto_substituido[i]: alfabeto_original[i] for i in range(26)}
+
+    resultado = ''
+    for caractere in mensagem.upper():
         resultado += mapa_chave.get(caractere, caractere)
     return resultado
 

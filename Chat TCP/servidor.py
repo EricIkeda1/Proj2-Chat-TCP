@@ -73,5 +73,5 @@ servidor.listen()
 clientes = []
 apelidos = []
 
-print("Servidor está ouvindo...")
+print("Servidor está rodando...")
 aceitar_conexoes()
