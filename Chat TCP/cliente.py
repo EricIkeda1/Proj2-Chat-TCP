@@ -14,6 +14,9 @@ escolha = input("Digite o número da cifra desejada: ")
 # Solicita ao usuário a chave de criptografia
 chave = input("Digite a chave para a cifra escolhida: ")
 
+ip_servidor = input("Digite o IP do servidor: ")  # Solicita o IP do servidor
+porta_servidor = int(input("Digite a porta do servidor: "))  # Solicita a porta do servidor
+
 # Função que implementa a Cifra de César
 def cifra_de_cesar(mensagem, chave, criptografar=True):
     resultado = ''  # Inicializa a string para armazenar o resultado
@@ -159,10 +162,10 @@ def enviar_mensagens():
         mensagem_criptografada = criptografar_mensagem(mensagem)  # Criptografa a mensagem
         cliente.send(mensagem_criptografada.encode('ascii'))  # Envia a mensagem criptografada para o servidor
 
-# Conecta ao servidor
-apelido = input("Escolha seu apelido: ")  # Solicita ao usuário o apelido
-cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Cria um socket TCP
-cliente.connect(('127.0.0.1', 55555))  # Conecta ao servidor local na porta 55555
+# Conectando ao servidor
+apelido = input("Escolha seu apelido: ")
+cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+cliente.connect(('127.0.0.1', 55555))
 
 # Inicia uma thread para receber mensagens do servidor
 thread_receber = threading.Thread(target=receber_mensagens)
