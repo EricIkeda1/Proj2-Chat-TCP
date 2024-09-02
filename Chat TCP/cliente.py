@@ -1,104 +1,91 @@
-import socket  # Importa o módulo socket para comunicação de rede
-import threading  # Importa o módulo threading para criar threads
+import socket
+import threading
 
-# Exibe opções de cifras de criptografia para o usuário
+# Escolha da cifra de criptografia pelo usuário
 print("Escolha a cifra de criptografia: ")
 print("1. Cifra de César")
 print("2. Substituição Monoalfabética")
 print("3. Cifra de Playfair")
 print("4. Cifra de Vigenère")
-
-# Captura a escolha da cifra de criptografia do usuário
 escolha = input("Digite o número da cifra desejada: ")
 
-# Solicita ao usuário a chave de criptografia
+# Solicitação da chave de criptografia
 chave = input("Digite a chave para a cifra escolhida: ")
-
-ip_servidor = input("Digite o IP do servidor: ")  # Solicita o IP do servidor
-porta_servidor = int(input("Digite a porta do servidor: "))  # Solicita a porta do servidor
 
 # Função que implementa a Cifra de César
 def cifra_de_cesar(mensagem, chave, criptografar=True):
-    resultado = ''  # Inicializa a string para armazenar o resultado
-    deslocamento = chave if criptografar else -chave  # Define o deslocamento com base na criptografia ou descriptografia
-    for caractere in mensagem:  # Itera sobre cada caractere da mensagem
-        if caractere.isalpha():  # Verifica se o caractere é uma letra
-            base = ord('A') if caractere.isupper() else ord('a')  # Define a base ASCII para maiúsculas ou minúsculas
-            # Aplica a cifra e adiciona o caractere ao resultado
+    resultado = ''
+    deslocamento = chave if criptografar else -chave
+    for caractere in mensagem:
+        if caractere.isalpha():
+            base = ord('A') if caractere.isupper() else ord('a')
             resultado += chr((ord(caractere) - base + deslocamento) % 26 + base)
         else:
-            resultado += caractere  # Adiciona caracteres não alfabéticos sem modificação
-    return resultado  # Retorna a mensagem criptografada ou descriptografada
+            resultado += caractere
+    return resultado
 
 # Função que implementa a Substituição Monoalfabética
 def cifra_monoalfabetica(mensagem, chave, criptografar=True):
-    alfabeto_original = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # Alfabeto original
+    alfabeto = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'  # Alfabeto original
     alfabeto_substituido = 'QWERTYUIOPLKJHGFDSAZXCVBNM'  # Alfabeto substituído
     
     chave = chave.upper()  # Converte a chave para maiúsculas
     
     if criptografar:
         # Cria um mapa de substituição usando o alfabeto original e substituído
-        mapa_chave = {alfabeto_original[i]: alfabeto_substituido[i] for i in range(26)}
+        mapa_chave = {alfabeto[i]: alfabeto_substituido[i] for i in range(26)}
     else:
         # Cria um mapa de substituição invertido para descriptografar
-        mapa_chave = {alfabeto_substituido[i]: alfabeto_original[i] for i in range(26)}
+        mapa_chave = {alfabeto_substituido[i]: alfabeto[i] for i in range(26)}
 
     resultado = ''  # Inicializa a string para armazenar o resultado
     for caractere in mensagem.upper():  # Converte a mensagem para maiúsculas e itera sobre cada caractere
         resultado += mapa_chave.get(caractere, caractere)  # Substitui o caractere ou mantém o original
     return resultado  # Retorna a mensagem criptografada ou descriptografada
 
+
 # Função que implementa a Cifra de Playfair
 def cifra_de_playfair(mensagem, chave, criptografar=True):
-    # Função auxiliar para formatar a mensagem
     def formatar_mensagem(mensagem):
-        mensagem = mensagem.replace(' ', '').upper()  # Remove espaços e converte para maiúsculas
-        formatada = ''  # Inicializa a string formatada
+        mensagem = mensagem.replace(' ', '').upper()
+        formatada = ''
         i = 0
         while i < len(mensagem):
             if i == len(mensagem) - 1:
-                formatada += mensagem[i] + 'X'  # Adiciona 'X' se a mensagem tiver um número ímpar de caracteres
+                formatada += mensagem[i] + 'X'
                 i += 1
             elif mensagem[i] == mensagem[i + 1]:
-                formatada += mensagem[i] + 'X'  # Adiciona 'X' se houver caracteres repetidos consecutivos
+                formatada += mensagem[i] + 'X'
                 i += 1
             else:
-                formatada += mensagem[i] + mensagem[i + 1]  # Adiciona pares de caracteres
+                formatada += mensagem[i] + mensagem[i + 1]
                 i += 2
-        return formatada  # Retorna a mensagem formatada
+        return formatada
 
-    # Função auxiliar para criar a matriz da cifra de Playfair
     def criar_matriz(chave):
-        alfabeto = 'ABCDEFGHIKLMNOPQRSTUVWXYZ'  # Alfabeto sem a letra 'J'
-        chave = chave.upper().replace('J', 'I')  # Substitui 'J' por 'I'
-        chave = ''.join(sorted(set(chave), key=chave.index))  # Remove duplicatas mantendo a ordem
-        matriz = [chave[i] for i in range(len(chave))]  # Adiciona caracteres da chave
-        matriz += [c for c in alfabeto if c not in matriz]  # Adiciona caracteres do alfabeto não presentes na chave
-        return [matriz[i:i + 5] for i in range(0, 25, 5)]  # Cria uma matriz 5x5
+        alfabeto = 'ABCDEFGHIKLMNOPQRSTUVWXYZ'
+        matriz = []
+        for caractere in chave.upper():
+            if caractere not in matriz and caractere != 'J':
+                matriz.append(caractere)
+        for caractere in alfabeto:
+            if caractere not in matriz:
+                matriz.append(caractere)
+        return [matriz[i:i + 5] for i in range(0, 25, 5)]
 
-    # Função auxiliar para encontrar a posição de um caractere na matriz
     def encontrar_posicao(matriz, caractere):
         for i, linha in enumerate(matriz):
             for j, valor in enumerate(linha):
                 if valor == caractere:
-                    return i, j  # Retorna a posição do caractere
-        return None, None  # Retorna None se o caractere não for encontrado
+                    return i, j
 
-    mensagem = formatar_mensagem(mensagem)  # Formata a mensagem
-    matriz = criar_matriz(chave)  # Cria a matriz da cifra
-    resultado = ''  # Inicializa a string para armazenar o resultado
+    mensagem = formatar_mensagem(mensagem)
+    matriz = criar_matriz(chave)
+    resultado = ''
     
-    for i in range(0, len(mensagem), 2):  # Itera sobre a mensagem em pares de caracteres
-        pos1 = encontrar_posicao(matriz, mensagem[i])  # Encontra a posição do primeiro caractere
-        pos2 = encontrar_posicao(matriz, mensagem[i + 1])  # Encontra a posição do segundo caractere
-
-        if pos1 == (None, None) or pos2 == (None, None):
-            resultado += mensagem[i] + mensagem[i + 1]  # Ignora caracteres não encontrados na matriz
-            continue
-        
-        linha1, coluna1 = pos1
-        linha2, coluna2 = pos2
+    for i in range(0, len(mensagem), 2):
+        linha1, coluna1 = encontrar_posicao(matriz, mensagem[i])
+        linha2, coluna2 = encontrar_posicao(matriz, mensagem[i + 1])
 
         if linha1 == linha2:
             coluna1 = (coluna1 + 1) % 5 if criptografar else (coluna1 - 1) % 5
@@ -109,68 +96,66 @@ def cifra_de_playfair(mensagem, chave, criptografar=True):
         else:
             coluna1, coluna2 = coluna2, coluna1
 
-        resultado += matriz[linha1][coluna1] + matriz[linha2][coluna2]  # Adiciona os caracteres criptografados ou descriptografados
+        resultado += matriz[linha1][coluna1] + matriz[linha2][coluna2]
     
-    return resultado  # Retorna a mensagem criptografada ou descriptografada
+    return resultado
 
 # Função que implementa a Cifra de Vigenère
 def cifra_de_vigenere(mensagem, chave, criptografar=True):
-    resultado = ''  # Inicializa a string para armazenar o resultado
-    chave = chave.lower()  # Converte a chave para minúsculas
-    indice_chave = 0  # Inicializa o índice da chave
+    resultado = ''
+    chave = chave.lower()
+    indice_chave = 0
     
-    for caractere in mensagem:  # Itera sobre cada caractere da mensagem
-        if caractere.isalpha():  # Verifica se o caractere é uma letra
-            deslocamento = ord(chave[indice_chave]) - ord('a')  # Calcula o deslocamento com base na chave
-            deslocamento = deslocamento if criptografar else -deslocamento  # Define o deslocamento com base na criptografia ou descriptografia
-            base = ord('A') if caractere.isupper() else ord('a')  # Define a base ASCII para maiúsculas ou minúsculas
-            resultado += chr((ord(caractere) - base + deslocamento) % 26 + base)  # Aplica a cifra e adiciona o caractere ao resultado
-            indice_chave = (indice_chave + 1) % len(chave)  # Atualiza o índice da chave
+    for caractere in mensagem:
+        if caractere.isalpha():
+            deslocamento = ord(chave[indice_chave]) - ord('a')
+            deslocamento = deslocamento if criptografar else -deslocamento
+            base = ord('A') if caractere.isupper() else ord('a')
+            resultado += chr((ord(caractere) - base + deslocamento) % 26 + base)
+            indice_chave = (indice_chave + 1) % len(chave)
         else:
-            resultado += caractere  # Adiciona caracteres não alfabéticos sem modificação
-    
-    return resultado  # Retorna a mensagem criptografada ou descriptografada
+            resultado += caractere
+    return resultado
 
 # Função que aplica a cifra escolhida na mensagem
 def criptografar_mensagem(mensagem):
     if escolha == '1':
-        return cifra_de_cesar(mensagem, int(chave))  # Aplica a Cifra de César
+        return cifra_de_cesar(mensagem, int(chave))
     elif escolha == '2':
-        return cifra_monoalfabetica(mensagem, chave)  # Aplica a Substituição Monoalfabética
+        return cifra_monoalfabetica(mensagem, chave)
     elif escolha == '3':
-        return cifra_de_playfair(mensagem, chave)  # Aplica a Cifra de Playfair
+        return cifra_de_playfair(mensagem, chave)
     elif escolha == '4':
-        return cifra_de_vigenere(mensagem, chave)  # Aplica a Cifra de Vigenère
+        return cifra_de_vigenere(mensagem, chave)
     else:
-        return mensagem  # Retorna a mensagem original se a escolha não for válida
+        return mensagem
 
 # Função que recebe mensagens do servidor
 def receber_mensagens():
     while True:
         try:
-            mensagem = cliente.recv(1024).decode('ascii')  # Recebe e decodifica a mensagem do servidor
-            print(mensagem)  # Exibe a mensagem recebida
+            mensagem = cliente.recv(1024).decode('ascii')
+            print(mensagem)
         except:
-            print("Ocorreu um erro!")  # Exibe mensagem de erro
-            cliente.close()  # Fecha a conexão com o servidor
-            break  # Sai do loop
+            print("Ocorreu um erro!")
+            cliente.close()
+            break
 
 # Função que envia mensagens para o servidor
 def enviar_mensagens():
     while True:
-        mensagem = '{}: {}'.format(apelido, input(''))  # Formata a mensagem com o apelido do usuário
-        mensagem_criptografada = criptografar_mensagem(mensagem)  # Criptografa a mensagem
-        cliente.send(mensagem_criptografada.encode('ascii'))  # Envia a mensagem criptografada para o servidor
+        mensagem = '{}: {}'.format(apelido, input(''))
+        mensagem_criptografada = criptografar_mensagem(mensagem)
+        cliente.send(mensagem_criptografada.encode('ascii'))
 
 # Conectando ao servidor
 apelido = input("Escolha seu apelido: ")
 cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 cliente.connect(('127.0.0.1', 55555))
 
-# Inicia uma thread para receber mensagens do servidor
+# Iniciando threads para envio e recebimento de mensagens
 thread_receber = threading.Thread(target=receber_mensagens)
 thread_receber.start()
 
-# Inicia uma thread para enviar mensagens para o servidor
 thread_enviar = threading.Thread(target=enviar_mensagens)
 thread_enviar.start()
